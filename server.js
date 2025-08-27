@@ -14,15 +14,22 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// MongoDB Atlas connection string
-const MONGODB_URI = 'mongodb+srv://pioo:Avionika27@cluster0.feboa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-const DB_NAME = 'tugas_app';
+// Set trust proxy untuk Railway
+app.set('trust proxy', 1);
+
+// MongoDB Atlas connection string from environment variables
+const MONGODB_URI = process.env.MONGODB_URI;
+const DB_NAME = process.env.DB_NAME || 'tugas_app';
 
 let db, gfs;
 
 // Connect to MongoDB
 async function connectDB() {
   try {
+    if (!MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is required');
+    }
+    
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
     console.log('Connected to MongoDB Atlas');
@@ -38,9 +45,15 @@ async function connectDB() {
 }
 
 // Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.RAILWAY_STATIC_URL, process.env.RAILWAY_PUBLIC_DOMAIN] 
+    : true,
+  credentials: true
+};
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Configure Multer for file uploads
 const storage = multer.memoryStorage();
