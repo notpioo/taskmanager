@@ -1,9 +1,11 @@
 import React from 'react';
-import { Moon, Sun, Upload, List } from 'lucide-react';
+import { Moon, Sun, Upload, List, Image, User } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const Header = ({ currentView, setCurrentView }) => {
   const { isDark, toggleTheme } = useTheme();
+  const { user, isAuthenticated } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-md border-b border-gray-200 dark:border-dark-border">
@@ -20,30 +22,70 @@ const Header = ({ currentView, setCurrentView }) => {
           </div>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-4">
             <button
               onClick={() => setCurrentView('upload')}
+              disabled={!isAuthenticated}
               className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
                 currentView === 'upload'
                   ? 'bg-accent text-white'
+                  : !isAuthenticated
+                  ? 'text-gray-400 cursor-not-allowed'
                   : 'nav-link'
               }`}
             >
               <Upload size={18} />
-              <span>Upload Tugas</span>
+              <span>Upload</span>
             </button>
             <button
               onClick={() => setCurrentView('list')}
+              disabled={!isAuthenticated}
               className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
                 currentView === 'list'
                   ? 'bg-accent text-white'
+                  : !isAuthenticated
+                  ? 'text-gray-400 cursor-not-allowed'
                   : 'nav-link'
               }`}
             >
               <List size={18} />
               <span>Daftar Tugas</span>
             </button>
+            <button
+              onClick={() => setCurrentView('galeri')}
+              disabled={!isAuthenticated}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                currentView === 'galeri'
+                  ? 'bg-accent text-white'
+                  : !isAuthenticated
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'nav-link'
+              }`}
+            >
+              <Image size={18} />
+              <span>Galeri</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('profile')}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                currentView === 'profile'
+                  ? 'bg-accent text-white'
+                  : 'nav-link'
+              }`}
+            >
+              <User size={18} />
+              <span>Profile</span>
+            </button>
           </nav>
+
+          {/* User Info */}
+          {isAuthenticated && (
+            <div className="hidden md:flex items-center space-x-3">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Halo, <span className="font-semibold text-accent">{user.name}</span>
+              </div>
+            </div>
+          )}
 
           {/* Theme Toggle */}
           <button
@@ -61,30 +103,66 @@ const Header = ({ currentView, setCurrentView }) => {
 
         {/* Mobile Navigation */}
         <div className="md:hidden pb-4">
-          <div className="flex space-x-2">
+          <div className="grid grid-cols-2 gap-2 mb-2">
             <button
               onClick={() => setCurrentView('upload')}
-              className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+              disabled={!isAuthenticated}
+              className={`flex items-center justify-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
                 currentView === 'upload'
                   ? 'bg-accent text-white'
+                  : !isAuthenticated
+                  ? 'bg-gray-100 dark:bg-dark-surface text-gray-400 cursor-not-allowed'
                   : 'bg-gray-100 dark:bg-dark-surface text-gray-600 dark:text-gray-300'
               }`}
             >
-              <Upload size={18} />
+              <Upload size={16} />
               <span className="text-sm">Upload</span>
             </button>
             <button
               onClick={() => setCurrentView('list')}
-              className={`flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+              disabled={!isAuthenticated}
+              className={`flex items-center justify-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
                 currentView === 'list'
+                  ? 'bg-accent text-white'
+                  : !isAuthenticated
+                  ? 'bg-gray-100 dark:bg-dark-surface text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-100 dark:bg-dark-surface text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              <List size={16} />
+              <span className="text-sm">Tugas</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('galeri')}
+              disabled={!isAuthenticated}
+              className={`flex items-center justify-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                currentView === 'galeri'
+                  ? 'bg-accent text-white'
+                  : !isAuthenticated
+                  ? 'bg-gray-100 dark:bg-dark-surface text-gray-400 cursor-not-allowed'
+                  : 'bg-gray-100 dark:bg-dark-surface text-gray-600 dark:text-gray-300'
+              }`}
+            >
+              <Image size={16} />
+              <span className="text-sm">Galeri</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('profile')}
+              className={`flex items-center justify-center space-x-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                currentView === 'profile'
                   ? 'bg-accent text-white'
                   : 'bg-gray-100 dark:bg-dark-surface text-gray-600 dark:text-gray-300'
               }`}
             >
-              <List size={18} />
-              <span className="text-sm">Daftar</span>
+              <User size={16} />
+              <span className="text-sm">Profile</span>
             </button>
           </div>
+          {isAuthenticated && (
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+              Halo, <span className="font-semibold text-accent">{user.name}</span>
+            </div>
+          )}
         </div>
       </div>
     </header>

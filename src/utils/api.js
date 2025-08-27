@@ -1,7 +1,42 @@
 const API_BASE = '/api';
 
 export const api = {
-  // Upload tugas
+  // Authentication
+  login: async (name, password) => {
+    const response = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, password }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Login failed');
+    }
+    
+    return response.json();
+  },
+
+  register: async (name, password) => {
+    const response = await fetch(`${API_BASE}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, password }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Registration failed');
+    }
+    
+    return response.json();
+  },
+
+  // Upload tugas/galeri
   uploadTugas: async (formData) => {
     const response = await fetch(`${API_BASE}/tugas/upload`, {
       method: 'POST',
@@ -27,31 +62,20 @@ export const api = {
     return response.json();
   },
 
-  // Verify password for private files
-  verifyPassword: async (id, password) => {
-    const response = await fetch(`${API_BASE}/tugas/verify-password/${id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ password }),
-    });
+  // Get all galeri
+  getGaleri: async () => {
+    const response = await fetch(`${API_BASE}/galeri`);
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Password verification failed');
+      throw new Error('Failed to fetch galeri');
     }
     
     return response.json();
   },
 
-  // Download tugas
-  downloadTugas: async (id, filename, password = null) => {
-    const url = password 
-      ? `${API_BASE}/tugas/download/${id}?password=${encodeURIComponent(password)}`
-      : `${API_BASE}/tugas/download/${id}`;
-      
-    const response = await fetch(url);
+  // Download file (works for both tugas and galeri)
+  downloadFile: async (id, filename) => {
+    const response = await fetch(`${API_BASE}/files/download/${id}`);
     
     if (!response.ok) {
       const error = await response.json();
@@ -69,9 +93,9 @@ export const api = {
     document.body.removeChild(a);
   },
 
-  // Delete tugas
-  deleteTugas: async (id) => {
-    const response = await fetch(`${API_BASE}/tugas/${id}`, {
+  // Delete file (works for both tugas and galeri)
+  deleteFile: async (id) => {
+    const response = await fetch(`${API_BASE}/files/${id}`, {
       method: 'DELETE',
     });
     

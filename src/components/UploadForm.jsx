@@ -1,15 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, CheckCircle, AlertCircle, File, User, Lock, Unlock } from 'lucide-react';
+import { Upload, X, CheckCircle, AlertCircle, File, BookOpen, Image } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
 
 const UploadForm = ({ onUploadSuccess }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     subject: '',
-    uploaderName: '',
-    isPrivate: false,
-    password: ''
+    category: 'tugas' // 'tugas' or 'galeri'
   });
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -18,10 +18,17 @@ const UploadForm = ({ onUploadSuccess }) => {
   const fileInputRef = useRef(null);
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
+    });
+  };
+
+  const handleCategoryChange = (category) => {
+    setFormData({
+      ...formData,
+      category
     });
   };
 
@@ -65,17 +72,7 @@ const UploadForm = ({ onUploadSuccess }) => {
     }
 
     if (!formData.title.trim()) {
-      setUploadStatus({ type: 'error', message: 'Judul tugas harus diisi' });
-      return;
-    }
-
-    if (!formData.uploaderName.trim()) {
-      setUploadStatus({ type: 'error', message: 'Nama uploader harus diisi' });
-      return;
-    }
-
-    if (formData.isPrivate && !formData.password.trim()) {
-      setUploadStatus({ type: 'error', message: 'Password harus diisi untuk tugas privat' });
+      setUploadStatus({ type: 'error', message: `Judul ${formData.category} harus diisi` });
       return;
     }
 
@@ -88,17 +85,15 @@ const UploadForm = ({ onUploadSuccess }) => {
       uploadFormData.append('title', formData.title);
       uploadFormData.append('description', formData.description);
       uploadFormData.append('subject', formData.subject);
-      uploadFormData.append('uploaderName', formData.uploaderName);
-      uploadFormData.append('isPrivate', formData.isPrivate);
-      if (formData.isPrivate && formData.password) {
-        uploadFormData.append('password', formData.password);
-      }
+      uploadFormData.append('uploaderName', user.name);
+      uploadFormData.append('userId', user.userId);
+      uploadFormData.append('category', formData.category);
 
       const result = await api.uploadTugas(uploadFormData);
       
       setUploadStatus({ 
         type: 'success', 
-        message: 'Tugas berhasil diupload!' 
+        message: `${formData.category === 'galeri' ? 'Media' : 'Tugas'} berhasil diupload!` 
       });
 
       // Reset form
@@ -106,9 +101,7 @@ const UploadForm = ({ onUploadSuccess }) => {
         title: '',
         description: '',
         subject: '',
-        uploaderName: '',
-        isPrivate: false,
-        password: ''
+        category: 'tugas'
       });
       setFile(null);
       if (fileInputRef.current) {
@@ -117,13 +110,13 @@ const UploadForm = ({ onUploadSuccess }) => {
 
       // Notify parent component
       if (onUploadSuccess) {
-        onUploadSuccess();
+        onUploadSuccess(formData.category);
       }
 
     } catch (error) {
       setUploadStatus({ 
         type: 'error', 
-        message: error.message || 'Gagal mengupload tugas' 
+        message: error.message || `Gagal mengupload ${formData.category}` 
       });
     } finally {
       setIsUploading(false);
@@ -134,14 +127,47 @@ const UploadForm = ({ onUploadSuccess }) => {
     <div className="max-w-2xl mx-auto">
       <div className="card animate-fade-in">
         <h2 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent">
-          Upload Tugas Baru
+          Upload {formData.category === 'galeri' ? 'Media ke Galeri' : 'Tugas Baru'}
         </h2>
+
+        {/* Category Toggle */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-3">
+            Kategori Upload
+          </label>
+          <div className="flex space-x-2 bg-gray-100 dark:bg-dark-surface p-1 rounded-lg">
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('tugas')}
+              className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 ${
+                formData.category === 'tugas'
+                  ? 'bg-accent text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+            >
+              <BookOpen size={18} />
+              <span>Tugas</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('galeri')}
+              className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 ${
+                formData.category === 'galeri'
+                  ? 'bg-accent text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              }`}
+            >
+              <Image size={18} />
+              <span>Galeri</span>
+            </button>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* File Upload Area */}
           <div>
             <label className="block text-sm font-medium mb-2">
-              File Tugas <span className="text-red-500">*</span>
+              File {formData.category === 'galeri' ? 'Media' : 'Tugas'} <span className="text-red-500">*</span>
             </label>
             <div
               className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${
@@ -188,7 +214,10 @@ const UploadForm = ({ onUploadSuccess }) => {
                     </button>
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Mendukung semua jenis file (PDF, Word, Image, dll.)
+                    {formData.category === 'galeri' 
+                      ? 'Mendukung gambar, video, dan media lainnya'
+                      : 'Mendukung semua jenis file (PDF, Word, Image, dll.)'
+                    }
                   </p>
                 </div>
               )}
@@ -205,7 +234,7 @@ const UploadForm = ({ onUploadSuccess }) => {
           {/* Title */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium mb-2">
-              Judul Tugas <span className="text-red-500">*</span>
+              Judul {formData.category === 'galeri' ? 'Media' : 'Tugas'} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -214,7 +243,7 @@ const UploadForm = ({ onUploadSuccess }) => {
               value={formData.title}
               onChange={handleInputChange}
               className="input-field"
-              placeholder="Masukkan judul tugas..."
+              placeholder={`Masukkan judul ${formData.category}...`}
               required
             />
           </div>
@@ -231,90 +260,33 @@ const UploadForm = ({ onUploadSuccess }) => {
               onChange={handleInputChange}
               rows={3}
               className="input-field resize-none"
-              placeholder="Deskripsi tugas (opsional)..."
+              placeholder={`Deskripsi ${formData.category} (opsional)...`}
             />
           </div>
 
-          {/* Subject */}
-          <div>
-            <label htmlFor="subject" className="block text-sm font-medium mb-2">
-              Mata Pelajaran
-            </label>
-            <input
-              type="text"
-              id="subject"
-              name="subject"
-              value={formData.subject}
-              onChange={handleInputChange}
-              className="input-field"
-              placeholder="Contoh: Matematika, Bahasa Indonesia, dll."
-            />
-          </div>
-
-          {/* Uploader Name */}
-          <div>
-            <label htmlFor="uploaderName" className="block text-sm font-medium mb-2">
-              Nama Uploader <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          {/* Subject - Only for tugas */}
+          {formData.category === 'tugas' && (
+            <div>
+              <label htmlFor="subject" className="block text-sm font-medium mb-2">
+                Mata Pelajaran
+              </label>
               <input
                 type="text"
-                id="uploaderName"
-                name="uploaderName"
-                value={formData.uploaderName}
+                id="subject"
+                name="subject"
+                value={formData.subject}
                 onChange={handleInputChange}
-                className="input-field pl-10"
-                placeholder="Masukkan nama Anda..."
-                required
+                className="input-field"
+                placeholder="Contoh: Matematika, Bahasa Indonesia, dll."
               />
             </div>
-          </div>
+          )}
 
-          {/* Privacy Settings */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="isPrivate"
-                name="isPrivate"
-                checked={formData.isPrivate}
-                onChange={handleInputChange}
-                className="w-4 h-4 text-accent bg-gray-100 border-gray-300 rounded focus:ring-accent dark:focus:ring-accent dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <label htmlFor="isPrivate" className="flex items-center space-x-2 text-sm font-medium">
-                {formData.isPrivate ? (
-                  <Lock className="text-red-500" size={16} />
-                ) : (
-                  <Unlock className="text-green-500" size={16} />
-                )}
-                <span>Tugas Privat (Butuh Password untuk Akses)</span>
-              </label>
+          {/* User Info Display */}
+          <div className="bg-gray-50 dark:bg-dark-bg p-4 rounded-lg">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              <strong>Diupload oleh:</strong> <span className="text-accent font-semibold">{user.name}</span>
             </div>
-            
-            {formData.isPrivate && (
-              <div className="animate-slide-up">
-                <label htmlFor="password" className="block text-sm font-medium mb-2">
-                  Password Akses <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className="input-field pl-10"
-                    placeholder="Masukkan password untuk tugas ini..."
-                    required={formData.isPrivate}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Password ini diperlukan untuk mengakses dan mendownload tugas
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Status Message */}
@@ -349,7 +321,7 @@ const UploadForm = ({ onUploadSuccess }) => {
             ) : (
               <>
                 <Upload size={18} />
-                <span>Upload Tugas</span>
+                <span>Upload {formData.category === 'galeri' ? 'ke Galeri' : 'Tugas'}</span>
               </>
             )}
           </button>
