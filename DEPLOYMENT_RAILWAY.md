@@ -25,10 +25,12 @@ NODE_ENV=production
 Railway akan otomatis menggunakan Dockerfile yang sudah disediakan.
 
 ## File-file yang sudah disiapkan:
-- ✅ `Dockerfile` - Konfigurasi build untuk Railway  
+- ✅ `Dockerfile` - Menggunakan Node.js 20 (kompatibel dengan Vite 7+)
 - ✅ `railway.json` - Konfigurasi Railway
+- ✅ `vite.config.js` - Fixed ES modules compatibility 
 - ✅ `.env.railway` - Template environment variables
 - ✅ Server sudah dikonfigurasi untuk production
+- ✅ Build process telah ditest dan berjalan sukses
 
 ## Troubleshooting:
 - Pastikan MONGODB_URI sudah benar di environment variables Railway
